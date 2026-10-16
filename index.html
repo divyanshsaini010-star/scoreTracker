@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FC Tijara MatchdayPro</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Teko:wght@600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  body { font-family: 'Outfit', sans-serif; background: #070a12; color: #f3f4f6; }
+  .font-teko { font-family: 'Teko', sans-serif; }
+  .glass { background: rgba(17, 24, 39, 0.9); border: 1px solid rgba(255,255,255,0.1); }
+</style>
+</head>
+<body class="min-h-screen p-3 pb-10 max-w-3xl mx-auto space-y-4">
+
+  <!-- HEADER -->
+  <header class="glass rounded-2xl p-3 flex justify-between items-center shadow-lg">
+    <div class="flex items-center space-x-2.5">
+      <div class="w-9 h-9 rounded-xl bg-blue-600 border border-amber-400 flex items-center justify-center font-teko text-xl font-bold">FT</div>
+      <div>
+        <h1 class="font-teko text-2xl leading-none">FC TIJARA <span class="text-amber-400">PRO</span></h1>
+        <p class="text-[10px] text-gray-400">Match & Penalty Scorekeeper</p>
+      </div>
+    </div>
+    <div class="flex space-x-1.5">
+      <button onclick="downloadSelf()" class="bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1.5 rounded-lg text-xs font-bold">Save HTML</button>
+      <button onclick="openModal('reportModal')" class="bg-amber-500 text-gray-950 px-2.5 py-1.5 rounded-lg text-xs font-bold">Report</button>
+    </div>
+  </header>
+
+  <!-- SCOREBOARD -->
+  <div class="glass rounded-2xl p-4 shadow-xl text-center space-y-4">
+    <div class="flex justify-between items-center text-xs border-b border-gray-800 pb-2">
+      <div class="space-x-1">
+        <span id="periodBadge" class="bg-blue-950 text-blue-300 px-2.5 py-1 rounded border border-blue-700 font-bold">1st Half</span>
+        <button onclick="addStoppage()" id="stopBtn" class="bg-gray-800 px-2 py-1 rounded text-gray-300 font-bold">+0'</button>
+      </div>
+      <div class="bg-gray-950 px-3 py-1 rounded-lg border border-gray-800 font-mono text-amber-400 text-lg font-bold">
+        <span id="clock">00:00</span>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-7 items-center my-2">
+      <div class="col-span-3">
+        <input id="homeName" value="FC Tijara" class="bg-transparent text-center font-bold text-base sm:text-lg w-full outline-none" />
+        <div id="homeGoals" class="text-[11px] text-blue-300 mt-1 space-y-0.5"></div>
+      </div>
+      <div class="col-span-1 font-teko text-5xl sm:text-6xl font-bold">
+        <span id="hScore">0</span>-<span id="aScore">0</span>
+      </div>
+      <div class="col-span-3">
+        <input id="awayName" value="Opponent FC" class="bg-transparent text-center font-bold text-base sm:text-lg w-full outline-none" />
+        <div id="awayGoals" class="text-[11px] text-red-300 mt-1 space-y-0.5"></div>
+      </div>
+    </div>
+
+    <!-- ACTION BUTTONS -->
+    <div class="grid grid-cols-3 sm:grid-cols-6 gap-2 pt-2 border-t border-gray-800 text-xs font-bold">
+      <button onclick="toggleClock()" id="clockBtn" class="bg-emerald-600 py-2.5 rounded-xl">Start</button>
+      <button onclick="nextPeriod()" class="bg-gray-800 py-2.5 rounded-xl border border-gray-700">Period</button>
+      <button onclick="openEvent('goal')" class="bg-blue-600 py-2.5 rounded-xl">+ Goal</button>
+      <button onclick="openEvent('penalty')" class="bg-purple-600 py-2.5 rounded-xl">+ Penalty</button>
+      <button onclick="openEvent('card')" class="bg-amber-600 py-2.5 rounded-xl">+ Card</button>
+      <button onclick="openEvent('sub')" class="bg-teal-600 py-2.5 rounded-xl">+ Sub</button>
+    </div>
+  </div>
+
+  <!-- TIMELINE & SHOOTOUT -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div class="glass rounded-2xl p-4 h-72 flex flex-col">
+      <div class="flex justify-between items-center mb-2">
+        <h2 class="font-teko text-xl tracking-wide">MATCH TIMELINE</h2>
+        <button onclick="resetAll()" class="text-[11px] text-red-400">Reset Match</button>
+      </div>
+      <div id="timeline" class="flex-1 overflow-y-auto space-y-2 text-xs"></div>
+    </div>
+
+    <div class="glass rounded-2xl p-4 space-y-3">
+      <div class="flex justify-between items-center">
+        <h2 class="font-teko text-xl tracking-wide">PENALTY SHOOTOUT</h2>
+        <button onclick="resetSO()" class="text-[11px] text-gray-400">Clear</button>
+      </div>
+      <div class="bg-gray-900 p-3 rounded-xl flex justify-between items-center">
+        <span class="text-xs font-bold text-blue-400">FC Tijara: <b id="soH" class="text-white text-sm">0</b></span>
+        <div class="space-x-1">
+          <button onclick="addSO('h',1)" class="bg-emerald-600 px-2.5 py-1 rounded text-xs font-bold">Scored</button>
+          <button onclick="addSO('h',0)" class="bg-red-600 px-2.5 py-1 rounded text-xs font-bold">Miss</button>
+        </div>
+      </div>
+      <div class="bg-gray-900 p-3 rounded-xl flex justify-between items-center">
+        <span class="text-xs font-bold text-red-400">Opponent: <b id="soA" class="text-white text-sm">0</b></span>
+        <div class="space-x-1">
+          <button onclick="addSO('a',1)" class="bg-emerald-600 px-2.5 py-1 rounded text-xs font-bold">Scored</button>
+          <button onclick="addSO('a',0)" class="bg-red-600 px-2.5 py-1 rounded text-xs font-bold">Miss</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EVENT MODAL -->
+  <div id="eventModal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center p-4 z-50">
+    <div class="glass rounded-2xl max-w-sm w-full p-5 space-y-3">
+      <h3 id="modalTitle" class="font-teko text-2xl">Log Event</h3>
+      <div class="grid grid-cols-2 gap-2 text-xs font-bold">
+        <button id="btnH" onclick="setTeam('home')" class="py-2 rounded-xl bg-blue-600">FC Tijara</button>
+        <button id="btnA" onclick="setTeam('away')" class="py-2 rounded-xl bg-gray-800">Opponent</button>
+      </div>
+      <div id="modalFields" class="space-y-2 text-xs"></div>
+      <div>
+        <label class="text-[11px] text-gray-400">Minute</label>
+        <input id="evMin" type="number" value="1" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2 text-xs" />
+      </div>
+      <div class="flex space-x-2 pt-2 text-xs font-bold">
+        <button onclick="closeModal('eventModal')" class="flex-1 bg-gray-800 py-2 rounded-xl">Cancel</button>
+        <button onclick="saveEvent()" class="flex-1 bg-amber-500 text-gray-950 py-2 rounded-xl">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- REPORT MODAL -->
+  <div id="reportModal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center p-4 z-50">
+    <div class="glass rounded-2xl max-w-sm w-full p-5 space-y-3 text-center">
+      <h3 class="font-teko text-2xl">Match Report</h3>
+      <div id="repText" class="bg-gray-900 p-3 rounded-xl text-left text-xs space-y-1 max-h-60 overflow-y-auto"></div>
+      <div class="flex space-x-2 text-xs font-bold">
+        <button onclick="closeModal('reportModal')" class="flex-1 bg-gray-800 py-2.5 rounded-xl">Close</button>
+        <button onclick="copyRep()" class="flex-1 bg-emerald-600 py-2.5 rounded-xl">Copy WhatsApp</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+const squad = ['Mayank (C)','Devansh','Vansh','Jatin','Oviyans','Parth (GK)','Darvit','Lakshith','Daksh'];
+const periods = ['1st Half','Half Time','2nd Half','Extra Time','Full Time'];
+let state = { h:0, a:0, sec:0, run:false, pIdx:0, stop:0, team:'home', type:'goal', evs:[], soH:0, soA:0 };
+let timer = null;
+
+function toggleClock(){
+  state.run = !state.run;
+  document.getElementById('clockBtn').innerText = state.run ? 'Pause' : 'Resume';
+  if(state.run) timer = setInterval(()=>{ state.sec++; renderClock(); },1000);
+  else clearInterval(timer);
+}
+function renderClock(){
+  let m = String(Math.floor(state.sec/60)).padStart(2,'0');
+  let s = String(state.sec%60).padStart(2,'0');
+  document.getElementById('clock').innerText = `${m}:${s}`;
+  document.getElementById('evMin').value = Math.floor(state.sec/60)+1;
+}
+function nextPeriod(){
+  state.pIdx = (state.pIdx+1)%periods.length;
+  document.getElementById('periodBadge').innerText = periods[state.pIdx];
+}
+function addStoppage(){
+  state.stop = (state.stop+1)%10;
+  document.getElementById('stopBtn').innerText = `+${state.stop}'`;
+}
+function openModal(id){
+  if(id==='reportModal') buildReport();
+  document.getElementById(id).classList.remove('hidden');
+}
+function closeModal(id){ document.getElementById(id).classList.add('hidden'); }
+
+function openEvent(t){
+  state.type = t;
+  openModal('eventModal');
+  setTeam('home');
+}
+function setTeam(tm){
+  state.team = tm;
+  document.getElementById('btnH').className = tm==='home' ? 'py-2 rounded-xl bg-blue-600' : 'py-2 rounded-xl bg-gray-800';
+  document.getElementById('btnA').className = tm==='away' ? 'py-2 rounded-xl bg-red-600' : 'py-2 rounded-xl bg-gray-800';
+  const box = document.getElementById('modalFields');
+  const opts = squad.map(p=>`<option value="${p}">${p}</option>`).join('');
+  const pSelect = (id) => tm==='home' ? `<select id="${id}" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2">${opts}</select>` : `<input id="${id}" value="Opponent Player" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2"/>`;
+
+  if(state.type==='goal'){
+    box.innerHTML = `<label class="text-gray-400">Scorer</label>${pSelect('f1')}<label class="text-gray-400">Assist (Optional)</label>${tm==='home'?`<select id="f2" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2"><option value="">Unassisted</option>${opts}</select>`:`<input id="f2" placeholder="Assist name" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2"/>`}`;
+  } else if(state.type==='penalty'){
+    box.innerHTML = `<label class="text-gray-400">Penalty Outcome</label><select id="f0" class="w-full bg-gray-900 border border-purple-500 rounded-lg p-2"><option value="Goal">Penalty Scored (+1 Goal)</option><option value="Saved">Penalty Saved by GK</option><option value="Missed">Penalty Missed</option></select><label class="text-gray-400">Penalty Taker</label>${pSelect('f1')}`;
+  } else if(state.type==='card'){
+    box.innerHTML = `<label class="text-gray-400">Player</label>${pSelect('f1')}<label class="text-gray-400">Card</label><select id="f2" class="w-full bg-gray-900 border border-gray-700 rounded-lg p-2"><option>Yellow Card</option><option>Red Card</option></select>`;
+  } else {
+    box.innerHTML = `<label class="text-emerald-400">Player ON</label>${pSelect('f1')}<label class="text-red-400">Player OFF</label>${pSelect('f2')}`;
+  }
+}
+
+function saveEvent(){
+  const min = document.getElementById('evMin').value || '1';
+  const tmName = state.team==='home' ? document.getElementById('homeName').value : document.getElementById('awayName').value;
+  let ev = { min, tm: state.team, tmName, goal:false, text:'', scorer:'' };
+
+  if(state.type==='goal'){
+    const s = document.getElementById('f1').value;
+    const a = document.getElementById('f2').value;
+    ev.goal = true; ev.scorer = `${s} ${min}' ${a?'(A: '+a+')':''}`;
+    ev.text = `Goal: ${s} ${a?'(Assist: '+a+')':''}`;
+    state.team==='home' ? state.h++ : state.a++;
+  } else if(state.type==='penalty'){
+    const out = document.getElementById('f0').value;
+    const s = document.getElementById('f1').value;
+    if(out==='Goal'){
+      ev.goal = true; ev.scorer = `${s} ${min}' (PEN)`;
+      ev.text = `PENALTY GOAL: ${s}`;
+      state.team==='home' ? state.h++ : state.a++;
+    } else {
+      ev.text = `Penalty ${out}: ${s}`;
+    }
+  } else if(state.type==='card'){
+    ev.text = `${document.getElementById('f2').value}: ${document.getElementById('f1').value}`;
+  } else {
+    ev.text = `Sub: ${document.getElementById('f1').value} ON for ${document.getElementById('f2').value}`;
+  }
+  state.evs.unshift(ev);
+  renderAll();
+  closeModal('eventModal');
+}
+
+function renderAll(){
+  document.getElementById('hScore').innerText = state.h;
+  document.getElementById('aScore').innerText = state.a;
+  document.getElementById('homeGoals').innerHTML = state.evs.filter(e=>e.goal && e.tm==='home').map(e=>`<div>${e.scorer}</div>`).join('');
+  document.getElementById('awayGoals').innerHTML = state.evs.filter(e=>e.goal && e.tm==='away').map(e=>`<div>${e.scorer}</div>`).join('');
+  document.getElementById('timeline').innerHTML = state.evs.map((e,i)=>`<div class="flex justify-between bg-gray-900 p-2 rounded-lg border border-gray-800"><span><b>${e.min}'</b> [${e.tmName}] ${e.text}</span><button onclick="delEv(${i})" class="text-red-400 font-bold">X</button></div>`).join('');
+}
+function delEv(i){
+  if(state.evs[i].goal) state.evs[i].tm==='home' ? state.h-- : state.a--;
+  state.evs.splice(i,1); renderAll();
+}
+function addSO(s,v){ if(s==='h') state.soH+=v; else state.soA+=v; document.getElementById('soH').innerText=state.soH; document.getElementById('soA').innerText=state.soA; }
+function resetSO(){ state.soH=0; state.soA=0; document.getElementById('soH').innerText=0; document.getElementById('soA').innerText=0; }
+function resetAll(){ state.h=0; state.a=0; state.sec=0; state.evs=[]; renderClock(); renderAll(); resetSO(); }
+
+function buildReport(){
+  const hN = document.getElementById('homeName').value;
+  const aN = document.getElementById('awayName').value;
+  let html = `<p class="font-bold text-amber-400">${hN} ${state.h} - ${state.a} ${aN}</p>`;
+  if(state.soH||state.soA) html += `<p class="text-purple-300">Penalties: ${state.soH} - ${state.soA}</p>`;
+  html += `<hr class="border-gray-800 my-2"/>`;
+  html += state.evs.slice().reverse().map(e=>`<p>${e.min}' [${e.tmName}] ${e.text}</p>`).join('') || '<p>No events</p>';
+  document.getElementById('repText').innerHTML = html;
+}
+function copyRep(){
+  const txt = document.getElementById('repText').innerText;
+  navigator.clipboard.writeText(txt).then(()=>alert('Copied for WhatsApp!'));
+}
+function downloadSelf(){
+  const blob = new Blob([document.documentElement.outerHTML], {type:'text/html'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'index.html';
+  a.click();
+}
+renderAll();
+</script>
+</body>
+</html>
